@@ -27,10 +27,11 @@ do
             aws ec2 describe-instances \
             --instances-ids $INSTANCE_ID \
             --query "Reservations[0].Instances[0].privateIpAddress" \
-            --output text )
+            --output text
+             )
          RECORD_NAME="$instance.$DOMAIN_NAME"
     fi
-echo "IP:$IP"
+    echo "IP: $IP"
     aws route53 change-resource-record-sets \
     --hosted-zone-id $ZONE_ID \
     --change-batch '{
@@ -51,5 +52,5 @@ echo "IP:$IP"
     ]
 }'
 
-    echo records updated for $instance
+    echo "records updated for $instance"
 done
