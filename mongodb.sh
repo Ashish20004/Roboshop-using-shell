@@ -19,14 +19,14 @@ do
          IP=$(
             aws ec2 describe-instances \
             --instance-ids $INSTANCE_ID \
-            --query "Reservations[].Instances[].publicIpAddress" \
+            --query "Reservations[].Instances[].PublicIpAddress" \
             --output text )
         RECORD_NAME="$DOMAIN_NAME"
     else
          IP=$(
             aws ec2 describe-instances \
             --instance-ids $INSTANCE_ID \
-            --query "Reservations[].Instances[].privateIpAddress" \
+            --query "Reservations[].Instances[].PrivateIpAddress" \
             --output text
              )
          RECORD_NAME="$instance.$DOMAIN_NAME"
