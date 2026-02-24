@@ -7,7 +7,7 @@ DOMAIN_NAME="devzone.fun"
 
 for instance in $@
 do 
-    INSTANCE_ID=$( aws ec2 run instances \
+    INSTANCE_ID=$( aws ec2 run-instances \
     --image-id $AMI_ID \
     --instance-type t3.micro \
     --security-group-ids $SG_ID \
@@ -19,14 +19,14 @@ do
          IP=$(
             aws ec2 describe-instances \
             --instance-ids $INSTANCE_ID \
-            --query "Reservations[0].Instances[0].publicIpAddress" \
+            --query "Reservations[].Instances[].publicIpAddress" \
             --output text )
         RECORD_NAME="$DOMAIN_NAME"
     else
          IP=$(
             aws ec2 describe-instances \
-            --instances-ids $INSTANCE_ID \
-            --query "Reservations[0].Instances[0].privateIpAddress" \
+            --instance-ids $INSTANCE_ID \
+            --query "Reservations[].Instances[].privateIpAddress" \
             --output text
              )
          RECORD_NAME="$instance.$DOMAIN_NAME"
