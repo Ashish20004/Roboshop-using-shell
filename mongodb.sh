@@ -1,56 +1,43 @@
 #!/bin/bash
 
-SG_ID="sg-0d5d4fedeb7568090"
-AMI_ID="ami-0220d79f3f480ecf5"
-ZONE_ID="Z06798631LYJMO4Z0P7UU"
-DOMAIN_NAME="devzone.fun"
+USERID=$(id -u)
+LOGs_FOLDER="/var/log/shell-roboshop"
+LOG_FILE="$LOGs_FOLDER/$0.log"
+R="\e[31m"
+G="\e[32m"
+Y="\e[33m"
+N="\e[0m"
 
-for instance in $@
-do 
-    INSTANCE_ID=$( aws ec2 run-instances \
-    --image-id $AMI_ID \
-    --instance-type t3.micro \
-    --security-group-ids $SG_ID \
-    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$instance}]" \
-    --query "Instances[0].InstanceId" \
-    --output text )
-    
-    if [ $instance == "frontend" ]; then
-         IP=$(
-            aws ec2 describe-instances \
-            --instance-ids $INSTANCE_ID \
-            --query "Reservations[].Instances[].PublicIpAddress" \
-            --output text )
-        RECORD_NAME="$DOMAIN_NAME"
+if [ $userid -ne 0 ]; then 
+    echo -e "$R you should run this script as root user $N"
+    exit 1
+fi
+
+validate() {
+    if [ $1 -ne 0 ]; then
+        echo -e "$2....$R Failure $N" | tee -a $LOG_FILE
+        exit 1
     else
-         IP=$(
-            aws ec2 describe-instances \
-            --instance-ids $INSTANCE_ID \
-            --query "Reservations[].Instances[].PrivateIpAddress" \
-            --output text
-             )
-         RECORD_NAME="$instance.$DOMAIN_NAME"
+        echo -e "$2....$G Success $N" | tee -a $LOG_FILE
     fi
-    echo "IP: $IP"
-    aws route53 change-resource-record-sets \
-    --hosted-zone-id $ZONE_ID \
-    --change-batch '{
-    "Changes": [
-        {
-            "Action": "UPSERT",
-            "ResourceRecordSet": {
-                "Name": "'$RECORD_NAME'",
-                "Type": "A",
-                "TTL": 1,
-                "ResourceRecords": [
-                    {
-                        "Value": "'$IP'"
-                    }
-                ]
-            }
-        }
-    ]
-}'
+    }
 
-    echo "records updated for $instance"
-done
+mkdir -p LOG_FOLDER
+
+cp mongo.repo /etc/yum.repos.d/mongo.repo &>> $LOG_FILE
+validate $? "copying mongo repo file"
+
+dnf install mongodb-org -y &>> $LOG_FILE
+validate $? "Installing mongodb"
+
+systemctl enable mongodb &>> $LOG_FILE
+validate $? "Enabling mongodb"
+
+systemctl start mongodb &>> $LOG_FILE
+validate $? "Starting mongodb"
+
+sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mongod.conf &>> LOG_FILE
+validate $? "Allowing remote connections to mongodb"
+
+systemctl restart mongodb &>> $LOG_FILE
+validate $? "Restarting mongodb"
