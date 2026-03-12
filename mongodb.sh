@@ -1,14 +1,14 @@
 #!/bin/bash
 
 USERID=$(id -u)
-LOGs_FOLDER="/var/log/shell-roboshop"
-LOG_FILE="$LOGs_FOLDER/$0.log"
+LOGS_FOLDER="/var/log/shell-roboshop"
+LOG_FILE="$LOGS_FOLDER/$0.log"
 R="\e[31m"
 G="\e[32m"
 Y="\e[33m"
 N="\e[0m"
 
-if [ $userid -ne 0 ]; then 
+if [ $USERID -ne 0 ]; then 
     echo -e "$R you should run this script as root user $N"
     exit 1
 fi
@@ -20,7 +20,7 @@ validate() {
     else
         echo -e "$2....$G Success $N" | tee -a $LOG_FILE
     fi
-    }
+} 
 
 mkdir -p LOG_FOLDER
 
@@ -41,3 +41,4 @@ validate $? "Allowing remote connections to mongodb"
 
 systemctl restart mongodb &>> $LOG_FILE
 validate $? "Restarting mongodb"
+
